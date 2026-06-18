@@ -9,21 +9,27 @@ st.title("💬 Real-Time AI Chat")
 st.caption("A responsive, generative conversational companion powered by Gemini")
 st.write("---")
 
-# --- API ACCREDITATION SIDEBAR LOCK ---
-if "api_key" not in st.session_state:
-    st.session_state.api_key = ""
+# --- SECURE API HANDSHAKE LAYER ---
+# 1. Check if the key exists inside encrypted Streamlit Secrets first
+if "GEMINI_API_KEY" in st.secrets and st.secrets["GEMINI_API_KEY"].strip() != "":
+    api_key = st.secrets["GEMINI_API_KEY"]
 
-# Display the API key lock box in the sidebar
-if not st.session_state.api_key:
-    st.sidebar.warning("⚠️ Action Required")
-    api_input = st.sidebar.text_input("Enter Gemini API Key:", type="password", help="Get a free key from Google AI Studio")
-    if api_input:
-        st.session_state.api_key = api_input
-        st.rerun()
-    st.stop()
+# 2. Fallback: If no secret is detected, use session state or show manual input
+else:
+    if "api_key" not in st.session_state:
+        st.session_state.api_key = ""
+        
+    if not st.session_state.api_key:
+        st.sidebar.warning("⚠️ Action Required")
+        api_input = st.sidebar.text_input("Enter Gemini API Key:", type="password", help="Get a free key from Google AI Studio")
+        if api_input:
+            st.session_state.api_key = api_input
+            st.rerun()
+        st.stop()
+    api_key = st.session_state.api_key
 
-# Initialize live GenAI client once the key is provided
-client = genai.Client(api_key=st.session_state.api_key)
+# Initialize live GenAI client using the validated key variable
+client = genai.Client(api_key=api_key)
 
 # --- RECURSIVE MESSAGE HISTORY ---
 if "messages" not in st.session_state:
